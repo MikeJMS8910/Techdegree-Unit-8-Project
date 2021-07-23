@@ -1,0 +1,28 @@
+extends layout
+
+block content
+  h1 Books
+  p
+    a.button(href="/books/new") Create New Book
+    form(action="/books/search" method="post")
+
+  table
+    thead
+      tr
+        th Title
+        th Author
+        th Genre
+        th Year
+    tbody
+      each book in books
+        tr
+          td
+            a(href=`/books/${book.fixed}`) #{book.title}
+          td #{book.author}
+          td #{book.genre}
+          td #{book.year}
+
+  - var n = 1
+    p
+      while n < pages +1
+        a(class="pagination" href="/books/pag/" + n)= n++
