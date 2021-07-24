@@ -7,6 +7,9 @@ block content
 
   body
       h1 New Book
+
+      p(style="color: red") #{extra}
+
       form(method="post" action="/books/new")
           p
               label(for="title") Title

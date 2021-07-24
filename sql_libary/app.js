@@ -1,7 +1,6 @@
 //get all of the needed packages
 const Sequelize = require('sequelize');
 var express = require('express');
-const book = require('./models/book');
 var app = express()
 const bodyParser = require('body-parser');
 
@@ -16,14 +15,16 @@ const sequelize = new Sequelize({
   storage: './libary.db'
 });
 
+let validValues = true
+
 class Book extends Sequelize.Model {} //sets up the book obj
 Book.init({
   title: {
     type: Sequelize.STRING,
     allowNull: false,
     validate: {
-      notEmpty: {
-        msg: 'Please provide a value for "title"',
+      notEmpty: function() {
+        validValues = false;
       }
     }
   },
@@ -31,8 +32,8 @@ Book.init({
     type: Sequelize.STRING,
     allowNull: false,
     validate: {
-      notEmpty: {
-        msg: 'Please provide a value for "title"',
+      notEmpty: function() {
+        validValues = false;
       }
     }
   },
@@ -78,7 +79,7 @@ app.get('/books', (req, res) => { //when the user goes to the books route
 });
 
 app.get('/books/new', (req, res) => { //when the user wants to make a new book
-  res.render("new-book")
+  res.render("new-book", {extra: ""})
 });
 
 app.post('/books/new', (req, res) => { //once they filled out all of the information for the book
@@ -94,10 +95,30 @@ app.post('/books/new', (req, res) => { //once they filled out all of the informa
       res.render("error", {error: error})
     }
   })();
+
   setTimeout(() => { 
-    res.redirect("/") 
+    if(validValues == true) {
+      res.redirect("/") 
+    } else {
+      validValues = false;
+      Book.destroy({
+        where: {
+          title: ""
+        }
+      })
+      Book.destroy({
+        where: {
+          author: ""
+        }
+      })
+      for(x = 0; x < books.length; x++) {
+        if(books[x].title == "" || books[x].author == "") {
+          books.splice(x, 1);
+        }
+      }
+      res.render("new-book", {extra: "Please make sure that the author and the title feilds are filled."})
+    }
   }, 100);
-  
 });
 
 app.get('/books/:id', (req, res) => { //when you want to edit a specific book
@@ -151,7 +172,7 @@ app.post('/books/:id', (req, res) => { //once you edited the book
       books[y].fixed = fixTitle(newValues.title);
  
     } catch(error) {
-      res.render("error", {error: error})
+      call404()
     }
   })();
   setTimeout(() => { res.redirect("/") }, 200);
@@ -176,10 +197,8 @@ app.post('/books/:id/delete', (req, res) => { //when you delete a book
         title: books[y].title
       }
     })
-    console.log("Before: "+JSON.stringify(books))
     let index = y;
     books.splice(y, 1);
-    console.log("After: "+JSON.stringify(books))
     setTimeout(() => { 
       res.redirect("/")
     }, 250);
@@ -188,7 +207,7 @@ app.post('/books/:id/delete', (req, res) => { //when you delete a book
   }
 });
 
-app.use(function (req, res, next) { //catches 404 errors
+app.use(function call404(req, res, next) { //catches 404 errors
   res.render("page-not-found")
   res.status(404).send("404: Page not found. Please make sure that your route is valid.")
 })
