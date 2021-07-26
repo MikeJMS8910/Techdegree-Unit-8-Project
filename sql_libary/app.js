@@ -22,18 +22,24 @@ Book.init({
   title: {
     type: Sequelize.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: function() {
         validValues = false;
+        errorMsg = "Please make sure that the book and author feild is filled."
+        console.log("Was empty-------------------------------------------------------------------------------------------------------------------------------")
       }
     }
   },
   author: {
     type: Sequelize.STRING,
     allowNull: false,
+    unique: true,
     validate: {
       notEmpty: function() {
         validValues = false;
+        errorMsg = "Please make sure that the author and book feild is filled."
+        console.log("Was empty--------------------------------------------------------------------------------------------------------------------------")
       }
     }
   },
@@ -100,23 +106,27 @@ app.post('/books/new', (req, res) => { //once they filled out all of the informa
     if(validValues == true) {
       res.redirect("/") 
     } else {
-      validValues = false;
-      Book.destroy({
-        where: {
-          title: ""
+      validValues = true;
+      if(books[books.length - 1].title == "" || books[books.length - 1].author == "") {
+        Book.destroy({
+          where: {
+            title: ""
+          }
+        })
+        Book.destroy({
+          where: {
+            author: ""
+          }
+        })
+        for(x = 0; x < books.length; x++) {
+          if(books[x].title == "" || books[x].author == "") {
+            books.splice(x, 1);
+          }
         }
-      })
-      Book.destroy({
-        where: {
-          author: ""
-        }
-      })
-      for(x = 0; x < books.length; x++) {
-        if(books[x].title == "" || books[x].author == "") {
-          books.splice(x, 1);
-        }
+        res.render("new-book", {extra: errorMsg})
+      } else {
+        res.redirect("/")
       }
-      res.render("new-book", {extra: "Please make sure that the author and the title feilds are filled."})
     }
   }, 100);
 });
